@@ -114,15 +114,12 @@ module psg(
     //////////////////////////////////////////////////////////////////////////
     // Noise generator
     //////////////////////////////////////////////////////////////////////////
-    reg [15:0] lfsr_r;
-    reg [9:0] noise_value_r;
+    reg [16:0] lfsr_r;
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            lfsr_r        <= 16'd1;
-            noise_value_r <= 10'd0;
+            lfsr_r        <= 17'd1;
         end else begin
-            lfsr_r        <= {lfsr_r[14:0], lfsr_r[1] ^ lfsr_r[2] ^ lfsr_r[4] ^ lfsr_r[15]};
-            noise_value_r <= {noise_value_r[8:0], lfsr_r[0]};
+            lfsr_r        <= {lfsr_r[15:0], lfsr_r[1] ^ lfsr_r[16]};
         end
     end
 
@@ -137,7 +134,7 @@ module psg(
     wire [16:0] new_phase = (cur_left_en | cur_right_en) ? (cur_phase + cur_freq) : 17'd0;
 
     wire        do_noise_sample = cur_phase[16] && !new_phase[16];
-    wire  [9:0] new_noise = do_noise_sample ? noise_value_r : cur_noise;
+    wire  [9:0] new_noise = do_noise_sample ? lfsr_r[9:0] : cur_noise;
 
     reg   [3:0] working_data_wridx_r;
     wire [26:0] working_data_wrdata = {new_noise, new_phase};
@@ -180,9 +177,9 @@ module psg(
     reg signed [22:0] left_accum_r,  right_accum_r;
 
     parameter
-        IDLE     = 3'b00,
-        FETCH_CH = 3'b01,
-        CALC_CH  = 3'b10;
+        IDLE     = 2'b00,
+        FETCH_CH = 2'b01,
+        CALC_CH  = 2'b10;
 
     reg [1:0] state_r;
 
