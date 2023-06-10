@@ -14,6 +14,7 @@ module pcm(
 
     // Audio FIFO interface
     input  wire        fifo_reset,
+    input  wire        fifo_restart,
     input  wire  [7:0] fifo_wrdata,
     input  wire        fifo_write,
     output wire        fifo_full,
@@ -28,6 +29,7 @@ module pcm(
     // Audio FIFO
     //////////////////////////////////////////////////////////////////////////
     wire       audio_fifo_reset = rst || fifo_reset;
+    wire       loop_enable      = sample_rate > 8'd128;
 
     wire [7:0] fifo_rddata;
     reg        fifo_read;
@@ -41,18 +43,22 @@ module pcm(
 
         .rddata(fifo_rddata),
         .rd_en(fifo_read),
+        .rd_rst(fifo_restart),
         
         .empty(fifo_empty),
         .almost_empty(fifo_almost_empty),
-        .full(fifo_full));
+        .full(fifo_full),
+        .loop_enable(loop_enable));
 
     //////////////////////////////////////////////////////////////////////////
     // Sample rate
     //////////////////////////////////////////////////////////////////////////
-    reg [7:0] sr_accum_r;
-    reg       sr_accum7_r;
+    reg [7:0]  sr_accum_r;
+    reg        sr_accum7_r;
 
-    reg       next_sample_r;
+    reg        next_sample_r;
+
+    wire [7:0] sample_rate_7 = loop_enable ? {1'b0, sample_rate[6:0]} : sample_rate;
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
@@ -63,7 +69,7 @@ module pcm(
 
             if (next_sample) begin
                 sr_accum7_r <= sr_accum_r[7];
-                sr_accum_r <= sr_accum_r + sample_rate;
+                sr_accum_r <= sr_accum_r + sample_rate_7;
             end
         end
     end
