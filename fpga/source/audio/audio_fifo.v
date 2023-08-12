@@ -13,8 +13,7 @@ module audio_fifo(
     
     output wire       empty,
     output wire       almost_empty,
-    output wire       full,
-    input  wire       loop_enable);
+    output wire       full);
 
     reg [11:0] wridx_r = 0;
     reg [11:0] rdidx_r = 0;
@@ -22,8 +21,7 @@ module audio_fifo(
     reg [7:0] mem_r [4095:0];
 
     wire [11:0] wridx_next = wridx_r + 12'd1;
-    wire [11:0] rdidx_inc1 = rdidx_r + 12'd1;
-    wire [11:0] rdidx_next = (loop_enable && (rdidx_inc1 == wridx_r)) ? 12'd0 : rdidx_inc1;
+    wire [11:0] rdidx_next = rdidx_r + 12'd1;
     wire [11:0] fifo_count = wridx_r - rdidx_r;
 
     assign empty        = (wridx_r == rdidx_r);
